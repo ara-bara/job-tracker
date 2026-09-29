@@ -8,3 +8,4 @@ export type JobApplication = {
   status: ApplicationStatus;
 };
 
+export type NewApplicationData = Omit<JobApplication, "id" | "status">;

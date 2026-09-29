@@ -1,8 +1,12 @@
 import "./App.css";
-import type { JobApplication, ApplicationStatus } from "./types/application";
+import type {
+  JobApplication,
+  ApplicationStatus,
+  NewApplicationData,
+} from "./types/application";
 import ApplicationCard from "./components/ApplicationCard";
 import { useState } from "react";
-import type { FormEvent } from "react";
+import ApplicationForm from "./components/ApplicationForm";
 
 const initialApplications: JobApplication[] = [
   {
@@ -22,21 +26,24 @@ const initialApplications: JobApplication[] = [
     status: "interview",
   },
 ];
+type SortOrder = "newest" | "oldest";
 function App() {
   const [applications, setApplications] =
     useState<JobApplication[]>(initialApplications);
-  const [company, setCompany] = useState("");
-  const [position, setPosition] = useState("");
-  const [url, setUrl] = useState("");
-  const [appliedAt, setAppliedAt] = useState("");
-  const [search, setSearch] = useState("All");
+
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<ApplicationStatus | "all">(
     "all",
   );
+  const [editingId, setEditingId] = useState<number | null>(null);
   function handleDelete(id: number): void {
     setApplications((prev) =>
       prev.filter((application) => application.id !== id),
     );
+    if (id === editingId) {
+      setEditingId(null);
+    }
   }
 
   function handleStatusChange(id: number, status: ApplicationStatus): void {
@@ -50,25 +57,6 @@ function App() {
     );
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    const trimmedCompany = company.trim();
-    const trimmedPosition = position.trim();
-    if (trimmedCompany === "" || trimmedPosition === "") return;
-    const newApplication: JobApplication = {
-      id: Date.now(),
-      company: trimmedCompany,
-      position: trimmedPosition,
-      url: url,
-      appliedAt: appliedAt,
-      status: "applied",
-    };
-    setApplications((prev) => [...prev, newApplication]);
-    setCompany("");
-    setPosition("");
-    setUrl("");
-    setAppliedAt("");
-  }
   const query = search.trim().toLowerCase();
   const filteredApplications = applications.filter(
     (filtered) =>
@@ -76,6 +64,37 @@ function App() {
         filtered.position.toLowerCase().includes(query)) &&
       (statusFilter === "all" || filtered.status === statusFilter),
   );
+  const sortedApplications = [...filteredApplications].sort((a, b) => {
+    if (sortOrder === "oldest") return a.appliedAt.localeCompare(b.appliedAt);
+    else return b.appliedAt.localeCompare(a.appliedAt);
+  });
+  function handleAdd(data: NewApplicationData): void {
+    const newApplication: JobApplication = {
+      id: Date.now(),
+      ...data,
+      status: "applied",
+    };
+    setApplications((prev) => [...prev, newApplication]);
+  }
+  function handleUpdate(id: number, data: NewApplicationData): void {
+    setApplications((prev) =>
+      prev.map((application) => {
+        if (application.id === id) {
+          return { ...application, ...data };
+        }
+        return application;
+      }),
+    );
+  }
+  const editingApplication = applications.find(
+    (application) => application.id === editingId,
+  );
+  function handleSave(data: NewApplicationData): void {
+    if (editingId !== null) {
+      handleUpdate(editingId, data);
+    } else handleAdd(data);
+    setEditingId(null);
+  }
   return (
     <main>
       <div className="eyebrow">ТВІЙ НАСТУПНИЙ КРОК</div>
@@ -83,63 +102,53 @@ function App() {
         Job Tracker<span className="title-dot">.</span>
       </h1>
       <p>Мої відгуки на вакансії</p>
-      <form onSubmit={handleSubmit}>
-        <h2 className="form-title">Новий відгук</h2>
-        <label htmlFor="company">Компанія</label>
-        <input
-          required
-          id="company"
-          type="text"
-          value={company}
-          onChange={(event) => setCompany(event.target.value)}
-        />
-        <label htmlFor="position">Посада</label>
-        <input
-          required
-          id="position"
-          type="text"
-          value={position}
-          onChange={(event) => setPosition(event.target.value)}
-        />
-        <label htmlFor="url">Лінк</label>
-        <input
-          required
-          id="url"
-          type="url"
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-        />
-        <label htmlFor="appliedAt">Дата</label>
-        <input
-          required
-          id="appliedAt"
-          type="date"
-          value={appliedAt}
-          onChange={(event) => setAppliedAt(event.target.value)}
-        />
-        <button type="submit">Додати відгук</button>
-      </form>
-      <label htmlFor="search">Пошук відгуків</label>
-      <input
-        value={search}
-        onChange={(event) => setSearch(event.target.value)}
-        id="search"
-        type="search"
+      <ApplicationForm
+        onSave={handleSave}
+        onCancel={() => setEditingId(null)}
+        initialData={editingApplication}
+        key={editingId ?? "new"}
       />
-      <label htmlFor="statusFilter">Фільтр за статусом</label>
-      <select
-        onChange={(event) =>
-          setStatusFilter(event.target.value as ApplicationStatus | "all")
-        }
-        value={statusFilter}
-        id="statusFilter"
-      >
-        <option value="all">Усі статуси</option>
-        <option value="applied">Відгук надіслано</option>
-        <option value="interview">Співбесіда</option>
-        <option value="offer">Пропозиція роботи</option>
-        <option value="rejected">Відмова</option>
-      </select>
+      <section className="filters" aria-label="Пошук і фільтри">
+        <div className="filter-field">
+          <label htmlFor="search">Пошук відгуків</label>
+          <input
+            id="search"
+            type="search"
+            placeholder="Компанія або посада"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </div>
+
+        <div className="filter-field">
+          <label htmlFor="statusFilter">Фільтр за статусом</label>
+          <select
+            id="statusFilter"
+            value={statusFilter}
+            onChange={(event) =>
+              setStatusFilter(event.target.value as ApplicationStatus | "all")
+            }
+          >
+            <option value="all">Усі статуси</option>
+            <option value="applied">Відгук надіслано</option>
+            <option value="interview">Співбесіда</option>
+            <option value="offer">Пропозиція роботи</option>
+            <option value="rejected">Відмова</option>
+          </select>
+        </div>
+
+        <div className="filter-field">
+          <label htmlFor="sortOrder">Сортування</label>
+          <select
+            id="sortOrder"
+            value={sortOrder}
+            onChange={(event) => setSortOrder(event.target.value as SortOrder)}
+          >
+            <option value="newest">Спочатку нові</option>
+            <option value="oldest">Спочатку старі</option>
+          </select>
+        </div>
+      </section>
       <div className="list-heading">
         <h2>Мої відгуки</h2>
         <span>
@@ -152,12 +161,13 @@ function App() {
         <p className="empty-state">За вашим запитом нічого не знайдено</p>
       ) : (
         <ul>
-          {filteredApplications.map((application) => (
+          {sortedApplications.map((application) => (
             <ApplicationCard
               key={application.id}
               application={application}
               onDelete={handleDelete}
               onStatusChange={handleStatusChange}
+              onEdit={setEditingId}
             ></ApplicationCard>
           ))}
         </ul>

@@ -4,12 +4,14 @@ type ApplicationCardProps = {
   application: JobApplication;
   onDelete: (id: number) => void;
   onStatusChange: (id: number, status: ApplicationStatus) => void;
+  onEdit: (id: number) => void;
 };
 
 export default function ApplicationCard({
   application,
   onDelete,
   onStatusChange,
+  onEdit,
 }: ApplicationCardProps) {
   return (
     <li className="application-card">
@@ -37,6 +39,9 @@ export default function ApplicationCard({
       <a href={application.url} target="_blank" rel="noopener noreferrer">
         Відкрити вакансію
       </a>
+      <button type="button" onClick={() => onEdit(application.id)}>
+        Редагувати
+      </button>
       <button
         type="button"
         onClick={() => onDelete(application.id)}

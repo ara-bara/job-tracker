@@ -1,38 +1,379 @@
-#root { max-width: 1120px; margin: 0 auto; padding: 64px 32px 80px; }
-.eyebrow { color: #62725f; font-size: 11px; font-weight: 700; letter-spacing: .2em; }
-h1 { margin: 10px 0 8px; font-size: clamp(40px, 6vw, 64px); line-height: 1.1; letter-spacing: -.055em; }
-.title-dot { color: #799746; }
-main > p { color: #677469; margin: 0; font-size: 17px; }
-form { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px 24px; padding: 32px; margin: 36px 0 44px; background: white; border: 1px solid #dce3d7; border-radius: 20px; box-shadow: 0 8px 28px #263c2910; }
-.form-title { grid-column: 1 / -1; font-size: 20px; margin: 0 0 10px; }
-label { align-self: center; font-size: 14px; font-weight: 600; }
-input { width: 100%; min-width: 0; border: 1px solid #d7dfd2; border-radius: 9px; background: #fbfcf9; padding: 12px 14px; color: #22382f; min-height: 46px; }
-input:focus { border-color: #719a50; background: white; }
-form button { grid-column: 2; justify-self: start; padding: 13px 24px; margin-top: 6px; border: 1px solid #264b38; border-radius: 9px; background: #264b38; color: white; font-weight: 600; }
-form button:hover { background: #376549; }
-.list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-.list-heading h2 { margin: 0; font-size: 24px; letter-spacing: -.03em; }
-.list-heading span { color: #677469; font-size: 13px; }
-ul { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-.application-card { padding: 26px; border: 1px solid #dce3d7; border-radius: 16px; background: white; display: grid; grid-template-columns: 1fr auto; gap: 14px 12px; align-content: start; overflow-wrap: anywhere; }
-.application-card h2 { grid-column: 1 / -1; font-size: 23px; letter-spacing: -.025em; margin: 0; }
-.application-card > p { grid-column: 1 / -1; margin: 0; color: #667267; line-height: 1.5; }
-.status { justify-self: start; grid-column: 1 / -1; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; }
-.status--applied { background: #edf1e5; color: #48622b; }
-.status--interview { background: #fff0d8; color: #845713; }
-.status--offer { background: #dff3e7; color: #23653e; }
-.status--rejected { background: #fbe6e6; color: #963b3b; }
-.application-card .application-date { font-size: 12px; padding-bottom: 16px; border-bottom: 1px solid #edf0e9; }
-.application-card a { align-self: center; font-size: 13px; font-weight: 600; text-underline-offset: 4px; }
-.application-card a:hover { color: #638338; }
-.application-card button { background: transparent; border: 1px solid #e3d9d7; border-radius: 7px; padding: 8px 11px; color: #92564c; font-size: 12px; }
-.application-card button:hover { background: #fff0ed; border-color: #b78479; }
-main > .empty-state { padding: 48px 24px; border: 1px dashed #b8c6ad; border-radius: 16px; text-align: center; background: #fafcf7; }
+#root {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 64px 32px 80px;
+}
+.eyebrow {
+  color: #62725f;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+h1 {
+  margin: 10px 0 8px;
+  font-size: clamp(40px, 6vw, 64px);
+  line-height: 1.1;
+  letter-spacing: -0.055em;
+}
+.title-dot {
+  color: #799746;
+}
+main > p {
+  color: #677469;
+  margin: 0;
+  font-size: 17px;
+}
+form {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 16px 24px;
+  padding: 32px;
+  margin: 36px 0 44px;
+  background: white;
+  border: 1px solid #dce3d7;
+  border-radius: 20px;
+  box-shadow: 0 8px 28px #263c2910;
+}
+.form-title {
+  grid-column: 1 / -1;
+  font-size: 20px;
+  margin: 0 0 10px;
+}
+label {
+  align-self: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d7dfd2;
+  border-radius: 9px;
+  background: #fbfcf9;
+  padding: 12px 14px;
+  color: #22382f;
+  min-height: 46px;
+}
+input:focus {
+  border-color: #719a50;
+  background: white;
+}
+form button {
+  grid-column: 2;
+  justify-self: start;
+  padding: 13px 24px;
+  margin-top: 6px;
+  border: 1px solid #264b38;
+  border-radius: 9px;
+  background: #264b38;
+  color: white;
+  font-weight: 600;
+}
+form button:hover {
+  background: #376549;
+}
+.list-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.list-heading h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.03em;
+}
+.list-heading span {
+  color: #677469;
+  font-size: 13px;
+}
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.application-card {
+  padding: 26px;
+  border: 1px solid #dce3d7;
+  border-radius: 16px;
+  background: white;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px 12px;
+  align-content: start;
+  overflow-wrap: anywhere;
+}
+.application-card h2 {
+  grid-column: 1 / -1;
+  font-size: 23px;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.application-card > p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #667267;
+  line-height: 1.5;
+}
+.status {
+  justify-self: start;
+  grid-column: 1 / -1;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.status--applied {
+  background: #edf1e5;
+  color: #48622b;
+}
+.status--interview {
+  background: #fff0d8;
+  color: #845713;
+}
+.status--offer {
+  background: #dff3e7;
+  color: #23653e;
+}
+.status--rejected {
+  background: #fbe6e6;
+  color: #963b3b;
+}
+.application-card .application-date {
+  font-size: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #edf0e9;
+}
+.application-card a {
+  align-self: center;
+  font-size: 13px;
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+.application-card a:hover {
+  color: #638338;
+}
+.application-card button {
+  background: transparent;
+  border: 1px solid #e3d9d7;
+  border-radius: 7px;
+  padding: 8px 11px;
+  color: #92564c;
+  font-size: 12px;
+}
+.application-card button:hover {
+  background: #fff0ed;
+  border-color: #b78479;
+}
+main > .empty-state {
+  padding: 48px 24px;
+  border: 1px dashed #b8c6ad;
+  border-radius: 16px;
+  text-align: center;
+  background: #fafcf7;
+}
 @media (max-width: 640px) {
-  #root { padding: 32px 18px 48px; }
-  form { grid-template-columns: minmax(0, 1fr); padding: 22px; gap: 10px; margin: 28px 0 32px; }
-  label:not(:first-of-type) { margin-top: 8px; }
-  form button { grid-column: 1; width: 100%; margin-top: 14px; }
-  ul { grid-template-columns: minmax(0, 1fr); }
-  .application-card { padding: 22px; }
+  #root {
+    padding: 32px 18px 48px;
+  }
+  form {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 22px;
+    gap: 10px;
+    margin: 28px 0 32px;
+  }
+  label:not(:first-of-type) {
+    margin-top: 8px;
+  }
+  form button {
+    grid-column: 1;
+    width: 100%;
+    margin-top: 14px;
+  }
+  ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .application-card {
+    padding: 22px;
+  }
+}
+/* Спільне оформлення списків вибору */
+select {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 12px 38px 12px 14px;
+  border: 1px solid #d7dfd2;
+  border-radius: 9px;
+  background-color: #fbfcf9;
+  color: #22382f;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23485f4e' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+select:focus {
+  border-color: #719a50;
+  background-color: #fff;
+}
+
+select:focus-visible {
+  outline: 3px solid #668f33;
+  outline-offset: 4px;
+}
+
+input::placeholder {
+  color: #778273;
+}
+
+/* Панель пошуку, фільтрації та сортування */
+.filters {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+  padding: 24px;
+  border: 1px solid #dce3d7;
+  border-radius: 16px;
+  background: #ffffffb3;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.filter-field label {
+  align-self: flex-start;
+  margin: 0;
+  color: #52624f;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filters input,
+.filters select {
+  min-height: 46px;
+  background-color: #fff;
+  font-size: 14px;
+}
+
+/* Заголовок списку */
+.list-heading {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.list-heading span {
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: #e6ecdf;
+  color: #52624f;
+  font-size: 12px;
+}
+
+/* Картки */
+.application-card {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  box-shadow: 0 4px 16px #263c2908;
+}
+
+.application-card select {
+  grid-column: 1 / -1;
+  font-size: 14px;
+}
+
+.application-card a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.application-card button {
+  min-height: 44px;
+}
+
+/* Планшети */
+@media (max-width: 850px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-field:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Телефони */
+@media (max-width: 640px) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 18px;
+  }
+
+  .filter-field label {
+    margin: 0;
+  }
+}
+
+@media (max-width: 380px) {
+  .application-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .application-card button {
+    width: 100%;
+  }
+}
+.form-actions {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-actions button {
+  width: auto;
+  margin: 0;
+}
+
+.form-actions .button-secondary {
+  background: transparent;
+  color: #264b38;
+  border: 1px solid #d7dfd2;
+}
+
+.form-actions .button-secondary:hover {
+  background: #edf1e5;
+}
+
+@media (max-width: 640px) {
+  .form-actions {
+    grid-column: 1;
+    margin-top: 12px;
+  }
+}
+.form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid #efc6c6;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #963b3b;
+  font-size: 14px;
 }
