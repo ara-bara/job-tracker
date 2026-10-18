@@ -5,7 +5,7 @@ import type {
   NewApplicationData,
 } from "./types/application";
 import ApplicationCard from "./components/ApplicationCard";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import ApplicationForm from "./components/ApplicationForm";
 
 const initialApplications: JobApplication[] = [
@@ -37,6 +37,20 @@ function App() {
     "all",
   );
   const [editingId, setEditingId] = useState<number | null>(null);
+  useEffect(() => {
+    async function loadApplications() {
+      try {
+        const response = await fetch("/api/applications");
+        if (!response.ok) throw new Error("Не вдалося завантажити відгуки");
+        const data = await response.json();
+        setApplications(data);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    loadApplications();
+  }, []);
+
   function handleDelete(id: number): void {
     setApplications((prev) =>
       prev.filter((application) => application.id !== id),
