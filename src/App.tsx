@@ -5,7 +5,7 @@ import type {
   NewApplicationData,
 } from "./types/application";
 import ApplicationCard from "./components/ApplicationCard";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import ApplicationForm from "./components/ApplicationForm";
 
 const initialApplications: JobApplication[] = [
@@ -51,24 +51,53 @@ function App() {
     loadApplications();
   }, []);
 
-  function handleDelete(id: number): void {
-    setApplications((prev) =>
-      prev.filter((application) => application.id !== id),
-    );
-    if (id === editingId) {
-      setEditingId(null);
+  async function handleDelete(id: number): Promise<void> {
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        console.error("Не вдалося видалити відгук");
+        return;
+      }
+      setApplications((prev) =>
+        prev.filter((application) => application.id !== id),
+      );
+      if (id === editingId) {
+        setEditingId(null);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
-  function handleStatusChange(id: number, status: ApplicationStatus): void {
-    setApplications((prev) =>
-      prev.map((application) => {
-        if (application.id === id) {
-          return { ...application, status };
-        }
-        return application;
-      }),
-    );
+  async function handleStatusChange(
+    id: number,
+    status: ApplicationStatus,
+  ): Promise<void> {
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!response.ok) {
+        console.error("Не вдалося оновити статус відгуку");
+        return;
+      }
+      setApplications((prev) =>
+        prev.map((application) => {
+          if (application.id === id) {
+            return { ...application, status };
+          }
+          return application;
+        }),
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const query = search.trim().toLowerCase();
@@ -82,23 +111,52 @@ function App() {
     if (sortOrder === "oldest") return a.appliedAt.localeCompare(b.appliedAt);
     else return b.appliedAt.localeCompare(a.appliedAt);
   });
-  function handleAdd(data: NewApplicationData): void {
-    const newApplication: JobApplication = {
-      id: Date.now(),
-      ...data,
-      status: "applied",
-    };
-    setApplications((prev) => [...prev, newApplication]);
+  async function handleAdd(data: NewApplicationData): Promise<void> {
+    try {
+      const response = await fetch("/api/applications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        console.error("Не вдалося додати відгук");
+        return;
+      }
+      const newApplication: JobApplication = await response.json();
+      setApplications((prev) => [...prev, newApplication]);
+    } catch (error) {
+      console.error(error);
+    }
   }
-  function handleUpdate(id: number, data: NewApplicationData): void {
-    setApplications((prev) =>
-      prev.map((application) => {
-        if (application.id === id) {
-          return { ...application, ...data };
-        }
-        return application;
-      }),
-    );
+  async function handleUpdate(
+    id: number,
+    data: NewApplicationData,
+  ): Promise<void> {
+    try {
+      const response = await fetch(`/api/applications/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        console.error("Не вдалося оновити відгук");
+        return;
+      }
+      setApplications((prev) =>
+        prev.map((application) => {
+          if (application.id === id) {
+            return { ...application, ...data };
+          }
+          return application;
+        }),
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
   const editingApplication = applications.find(
     (application) => application.id === editingId,
