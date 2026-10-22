@@ -1,5 +1,5 @@
 import express from "express";
-
+import { pool } from "./db.js";
 const app = express();
 app.use(express.json());
 
@@ -30,7 +30,7 @@ app.get("/api/applications/:id", (req, res) => {
   res.json(application);
 });
 
-app.post("/api/applications", (req, res) => {
+app.post("/api/applications", async (req, res) => {
   const { company, position, url, appliedAt } = req.body ?? {};
 
   if (typeof company !== "string" || company.trim() === "") {
@@ -43,6 +43,18 @@ app.post("/api/applications", (req, res) => {
       message: "Посада має бути непорожнім рядком",
     });
   }
+  if (typeof appliedAt !== "string" || appliedAt.trim() === "") {
+    return res.status(400).json({
+      message: "Дата має бути непорожнім рядком",
+    });
+  }
+
+  if (typeof url !== "string" || url.trim() === "") {
+    return res.status(400).json({
+      message: "Посилання має бути непорожнім рядком",
+    });
+  }
+
   const newApplication = {
     id: Date.now(),
     company: company,
@@ -52,12 +64,25 @@ app.post("/api/applications", (req, res) => {
     status: "applied",
   };
 
-  applications.push(newApplication);
+  const result = await pool.query(
+    `INSERT INTO applications (company, position, url, applied_at, status)
+   VALUES ($1, $2, $3, $4, $5)
+   RETURNING id, company, position, url,
+     to_char(applied_at, 'YYYY-MM-DD') AS "appliedAt", status`,
+    [company, position, url, appliedAt, "applied"],
+  );
 
-  res.status(201).json(newApplication);
+  res.status(201).json(result.rows[0]);
 });
 
-app.get("/api/applications", (req, res) => res.json(applications));
+app.get("/api/applications", async (req, res) => {
+  const result = await pool.query(`SELECT id, company, position, url,
+       to_char(applied_at, 'YYYY-MM-DD') AS "appliedAt",
+       status
+FROM applications
+ORDER BY id;`);
+  return res.json(result.rows);
+});
 
 app.delete("/api/applications/:id", (req, res) => {
   const id = Number(req.params.id);
@@ -80,7 +105,6 @@ app.patch("/api/applications/:id", (req, res) => {
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: "Некоректний статус" });
     }
-
   }
   const company = req.body?.company;
   if (company !== undefined) {

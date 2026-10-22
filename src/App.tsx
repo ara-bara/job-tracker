@@ -8,28 +8,9 @@ import ApplicationCard from "./components/ApplicationCard";
 import { useState, useEffect } from "react";
 import ApplicationForm from "./components/ApplicationForm";
 
-const initialApplications: JobApplication[] = [
-  {
-    id: 0,
-    company: "RedWi",
-    position: "junior FullStack Developer",
-    url: "https://RedWi.com",
-    appliedAt: "2026-09-23",
-    status: "applied",
-  },
-  {
-    id: 1,
-    company: "Fudji",
-    position: "junior FullStack Developer",
-    url: "https://Fudji.com",
-    appliedAt: "2026-02-12",
-    status: "interview",
-  },
-];
 type SortOrder = "newest" | "oldest";
 function App() {
-  const [applications, setApplications] =
-    useState<JobApplication[]>(initialApplications);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
 
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
   const [search, setSearch] = useState("");
@@ -37,6 +18,8 @@ function App() {
     "all",
   );
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [loadError, setLoadError] = useState("");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   useEffect(() => {
     async function loadApplications() {
       try {
@@ -46,6 +29,9 @@ function App() {
         setApplications(data);
       } catch (error) {
         console.error(error);
+        setLoadError("Не вдалося завантажити відгуки");
+      } finally {
+        setIsLoading(false);
       }
     }
     loadApplications();
@@ -111,7 +97,7 @@ function App() {
     if (sortOrder === "oldest") return a.appliedAt.localeCompare(b.appliedAt);
     else return b.appliedAt.localeCompare(a.appliedAt);
   });
-  async function handleAdd(data: NewApplicationData): Promise<void> {
+  async function handleAdd(data: NewApplicationData): Promise<boolean> {
     try {
       const response = await fetch("/api/applications", {
         method: "POST",
@@ -122,18 +108,20 @@ function App() {
       });
       if (!response.ok) {
         console.error("Не вдалося додати відгук");
-        return;
+        return false;
       }
       const newApplication: JobApplication = await response.json();
       setApplications((prev) => [...prev, newApplication]);
     } catch (error) {
       console.error(error);
+      return false;
     }
+    return true;
   }
   async function handleUpdate(
     id: number,
     data: NewApplicationData,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       const response = await fetch(`/api/applications/${id}`, {
         method: "PATCH",
@@ -144,7 +132,7 @@ function App() {
       });
       if (!response.ok) {
         console.error("Не вдалося оновити відгук");
-        return;
+        return false;
       }
       setApplications((prev) =>
         prev.map((application) => {
@@ -156,16 +144,22 @@ function App() {
       );
     } catch (error) {
       console.error(error);
+      return false;
     }
+    return true;
   }
   const editingApplication = applications.find(
     (application) => application.id === editingId,
   );
-  function handleSave(data: NewApplicationData): void {
+  async function handleSave(data: NewApplicationData): Promise<boolean> {
+    let success: boolean;
     if (editingId !== null) {
-      handleUpdate(editingId, data);
-    } else handleAdd(data);
-    setEditingId(null);
+      success = await handleUpdate(editingId, data);
+    } else {
+      success = await handleAdd(data);
+    }
+    if (success === true) setEditingId(null);
+    return success;
   }
   return (
     <main>
@@ -227,7 +221,7 @@ function App() {
           Показано {filteredApplications.length} із {applications.length}
         </span>
       </div>
-      {applications.length === 0 ? (
+      {isLoading ? <p>Завантаження відгуків…</p>: loadError? <p role="alert">{loadError}</p> : applications.length === 0 ? (
         <p className="empty-state">Ви ще не додали жодного відгуку</p>
       ) : filteredApplications.length === 0 ? (
         <p className="empty-state">За вашим запитом нічого не знайдено</p>

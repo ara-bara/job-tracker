@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 
 type ApplicationFormProps = {
-  onSave: (data: NewApplicationData) => void;
+  onSave: (data: NewApplicationData) => Promise<boolean>;
   initialData?: NewApplicationData;
   onCancel?: () => void;
 };
@@ -17,8 +17,12 @@ export default function ApplicationForm({
   const [url, setUrl] = useState(initialData?.url ?? "");
   const [appliedAt, setAppliedAt] = useState(initialData?.appliedAt ?? "");
   const [error, setError] = useState("");
-  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ): Promise<void> {
     event.preventDefault();
+    if (isSaving === true) return;
     const trimmedCompany = company.trim();
     const trimmedPosition = position.trim();
     if (trimmedCompany === "" || trimmedPosition === "") {
@@ -26,16 +30,28 @@ export default function ApplicationForm({
       return;
     }
     setError("");
-    onSave({
-      company: trimmedCompany,
-      position: trimmedPosition,
-      url,
-      appliedAt,
-    });
-    setCompany("");
-    setPosition("");
-    setUrl("");
-    setAppliedAt("");
+    setIsSaving(true);
+    try {
+      const success = await onSave({
+        company: trimmedCompany,
+        position: trimmedPosition,
+        url,
+        appliedAt,
+      });
+
+      if (!success) {
+        setError("Не вдалося надіслати дані");
+        return;
+      }
+      setCompany("");
+      setPosition("");
+      setUrl("");
+      setAppliedAt("");
+    } catch {
+      setError("Не вдалося зберегти відгук. Спробуйте ще раз");
+    } finally {
+      setIsSaving(false);
+    }
   }
   return (
     <form onSubmit={handleSubmit}>
@@ -80,8 +96,12 @@ export default function ApplicationForm({
         onChange={(event) => setAppliedAt(event.target.value)}
       />
       <div className="form-actions">
-        <button type="submit">
-          {initialData ? "Зберегти зміни" : "Додати відгук"}
+        <button type="submit" disabled={isSaving}>
+          {isSaving
+            ? "Збереження...."
+            : initialData
+              ? "Зберегти зміни"
+              : "Додати відгук"}
         </button>
 
         {initialData && onCancel && (
