@@ -1,0 +1,8 @@
+CREATE TABLE applications (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  company TEXT NOT NULL,
+  position TEXT NOT NULL,
+  url TEXT NOT NULL,
+  applied_at DATE NOT NULL,
+  status TEXT NOT NULL
+);

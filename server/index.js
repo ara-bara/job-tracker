@@ -7,27 +7,29 @@ app.get("/api/health", (req, res) => {
   res.json({ message: "Server is working" });
 });
 
-const applications = [
-  {
-    id: 1,
-    company: "Google",
-    position: "Junior Fullstack Developer",
-    url: "https://google.com",
-    appliedAt: "2026-10-19",
-    status: "applied",
-  },
-];
-
-app.get("/api/applications/:id", (req, res) => {
+app.get("/api/applications/:id", async (req, res) => {
   const id = Number(req.params.id);
 
-  const application = applications.find((item) => item.id === id);
-
-  if (!application) {
-    return res.status(404).json({ message: "Відгук не знайдено" });
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ message: "Некоректний id" });
   }
+  try {
+    const result = await pool.query(
+      `SELECT id,company,position,url,to_char(applied_at,'YYYY-MM-DD') as "appliedAt",status FROM applications WHERE id=$1`,
+      [id],
+    );
 
-  res.json(application);
+    const application = result.rows[0];
+
+    if (!application) {
+      return res.status(404).json({ message: "Відгук не знайдено" });
+    }
+
+    return res.json(application);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Не вдалося завантажити відгук" });
+  }
 });
 
 app.post("/api/applications", async (req, res) => {
@@ -55,92 +57,114 @@ app.post("/api/applications", async (req, res) => {
     });
   }
 
-  const newApplication = {
-    id: Date.now(),
-    company: company,
-    position: position,
-    url: url,
-    appliedAt: appliedAt,
-    status: "applied",
-  };
-
-  const result = await pool.query(
-    `INSERT INTO applications (company, position, url, applied_at, status)
+  try {
+    const result = await pool.query(
+      `INSERT INTO applications (company, position, url, applied_at, status)
    VALUES ($1, $2, $3, $4, $5)
    RETURNING id, company, position, url,
      to_char(applied_at, 'YYYY-MM-DD') AS "appliedAt", status`,
-    [company, position, url, appliedAt, "applied"],
-  );
+      [company, position, url, appliedAt, "applied"],
+    );
 
-  res.status(201).json(result.rows[0]);
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    if (error.code === "22007" || error.code === "22008") {
+      return res.status(400).json({ message: "Некоректна дата" });
+    }
+
+    console.error(error);
+    return res.status(500).json({ message: "Не вдалося додати відгук" });
+  }
 });
 
 app.get("/api/applications", async (req, res) => {
-  const result = await pool.query(`SELECT id, company, position, url,
+  try {
+    const result = await pool.query(`SELECT id, company, position, url,
        to_char(applied_at, 'YYYY-MM-DD') AS "appliedAt",
        status
 FROM applications
 ORDER BY id;`);
-  return res.json(result.rows);
-});
-
-app.delete("/api/applications/:id", (req, res) => {
-  const id = Number(req.params.id);
-  const index = applications.findIndex((item) => item.id === id);
-  if (index === -1) {
-    return res.status(404).json({ message: "Відгук не знайдено" });
+    return res.json(result.rows);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Не вдалося завантажити відгуки" });
   }
-  applications.splice(index, 1);
-  res.status(204).end();
 });
 
-app.patch("/api/applications/:id", (req, res) => {
+app.delete("/api/applications/:id", async (req, res) => {
   const id = Number(req.params.id);
-  const status = req.body?.status;
-  const application = applications.find((item) => item.id === id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ message: "Некоректний id" });
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM applications WHERE id=$1 RETURNING id`,
+      [id],
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ message: "Відгук не знайдено" });
+    }
+
+    return res.status(204).end();
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Не вдалося видалити відгук" });
+  }
+});
+
+app.patch("/api/applications/:id", async (req, res) => {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ message: "Некоректний id" });
+  }
+
+  const { status, company, position, url, appliedAt } = req.body ?? {};
   const allowedStatuses = ["applied", "interview", "offer", "rejected"];
-  if (!application)
-    return res.status(404).json({ message: "Відгук не знайдено" });
-  if (status !== undefined) {
-    if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: "Некоректний статус" });
-    }
+
+  if (status !== undefined && !allowedStatuses.includes(status)) {
+    return res.status(400).json({ message: "Некоректний статус" });
   }
-  const company = req.body?.company;
-  if (company !== undefined) {
-    if (typeof company !== "string" || company.trim() === "") {
+
+  for (const value of [company, position, url, appliedAt]) {
+    if (
+      value !== undefined &&
+      (typeof value !== "string" || value.trim() === "")
+    ) {
       return res.status(400).json({ message: "Некоректні вхідні дані" });
     }
   }
 
-  const position = req.body?.position;
-  if (position !== undefined) {
-    if (typeof position !== "string" || position.trim() === "") {
-      return res.status(400).json({ message: "Некоректні вхідні дані" });
+  try {
+    const result = await pool.query(
+      `UPDATE applications
+       SET status = COALESCE($1, status),
+           company = COALESCE($2, company),
+           position = COALESCE($3, position),
+           url = COALESCE($4, url),
+           applied_at = COALESCE($5::date, applied_at)
+       WHERE id = $6
+       RETURNING id, company, position, url,
+         to_char(applied_at, 'YYYY-MM-DD') AS "appliedAt", status`,
+      [status, company, position, url, appliedAt, id],
+    );
+
+    const application = result.rows[0];
+
+    if (!application) {
+      return res.status(404).json({ message: "Відгук не знайдено" });
     }
-  }
 
-  const appliedAt = req.body?.appliedAt;
-  if (appliedAt !== undefined) {
-    if (typeof appliedAt !== "string" || appliedAt.trim() === "") {
-      return res.status(400).json({ message: "Некоректні вхідні дані" });
+    return res.json(application);
+  } catch (error) {
+    if (error.code === "22007" || error.code === "22008") {
+      return res.status(400).json({ message: "Некоректна дата" });
     }
+
+    console.error(error);
+    return res.status(500).json({ message: "Не вдалося оновити відгук" });
   }
-
-  const url = req.body?.url;
-  if (url !== undefined) {
-    if (typeof url !== "string" || url.trim() === "") {
-      return res.status(400).json({ message: "Некоректні вхідні дані" });
-    }
-  }
-
-  if (status !== undefined) application.status = status;
-  if (company !== undefined) application.company = company;
-  if (position !== undefined) application.position = position;
-  if (appliedAt !== undefined) application.appliedAt = appliedAt;
-  if (url !== undefined) application.url = url;
-
-  res.json(application);
 });
 
 app.listen(3000, () => {
